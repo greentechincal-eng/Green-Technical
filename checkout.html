@@ -1,0 +1,460 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#4AA6A8">
+<title>Carrito y pago | Green Tech Perú</title>
+<style>
+:root{--teal:#4AA6A8;--dark:#287477;--orange:#F08106;--ink:#102A2B;--gray:#66736d;--line:#e5ebe7;--soft:#f5f8f6;--white:#fff}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,Helvetica,sans-serif;color:var(--ink);background:linear-gradient(135deg,#f5f8f6,#fff)}
+header{background:rgba(255,255,255,.95);border-bottom:1px solid var(--line);padding:16px 5%;display:flex;justify-content:space-between;align-items:center;gap:20px;position:sticky;top:0;z-index:20;backdrop-filter:blur(12px)}
+header a{color:var(--dark);font-weight:800;text-decoration:none}
+.brand{display:flex;align-items:center;min-height:42px}
+.brand img{display:block;max-width:210px;max-height:55px;object-fit:contain}
+.wrap{width:min(1160px,92%);margin:42px auto 70px}
+.kicker{color:var(--teal);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:2px;margin-bottom:9px}
+h1{font-size:clamp(30px,4vw,48px);margin:0}
+.muted{color:var(--gray);line-height:1.6}
+.layout{display:grid;grid-template-columns:1.35fr .85fr;gap:25px;margin-top:30px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:24px;padding:24px;box-shadow:0 18px 55px rgba(16,42,43,.06)}
+.item{display:grid;grid-template-columns:95px 1fr auto;gap:17px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
+.item:last-child{border:0}
+.item img{width:95px;height:85px;object-fit:contain;background:#eaf7f7;border-radius:15px}
+.item h3{margin:0 0 7px;font-size:16px}
+.qty{display:flex;align-items:center;gap:8px;margin-top:11px}
+.qty button,.remove{border:1px solid var(--line);background:#fff;border-radius:9px;padding:7px 11px;cursor:pointer}
+.qty input{width:52px;text-align:center;padding:7px;border:1px solid var(--line);border-radius:9px}
+.price{font-weight:900;color:var(--dark);white-space:nowrap}
+.remove{color:#a33;margin-top:8px;font-size:12px}
+.total{display:flex;justify-content:space-between;gap:15px;padding:13px 0;border-bottom:1px solid var(--line)}
+.total.final{font-size:21px;font-weight:900;border:0;padding-top:18px}
+label{display:block;font-size:13px;font-weight:800;margin:15px 0 6px}
+input,textarea{width:100%;padding:13px;border:1px solid #d8e2dc;border-radius:11px;font:14px Arial;background:#fff;outline:none}
+input:focus,textarea:focus{border-color:var(--teal);box-shadow:0 0 0 4px rgba(74,166,168,.10)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.card-payment{margin-top:22px;padding:17px;border-radius:16px;background:#eef8f8;border:1px solid #d9eeee}
+.card-payment strong{display:block;color:var(--dark);font-size:14px;margin-bottom:5px}
+.secure{display:flex;align-items:center;gap:8px;color:var(--gray);font-size:11px;line-height:1.4;margin-top:10px}
+button.primary{width:100%;border:0;background:var(--orange);color:#fff;font-weight:900;border-radius:999px;padding:16px;cursor:pointer;margin-top:17px;font-size:15px}
+button.primary:hover{filter:brightness(.96);transform:translateY(-1px)}
+button.primary:disabled{opacity:.45;cursor:not-allowed;transform:none}
+.empty{text-align:center;padding:55px 15px}
+.status{display:none;margin-top:16px;padding:13px;border-radius:13px;font-size:13px;line-height:1.5}
+.status.show{display:block}
+.status.ok{background:#eaf8ef;color:#23623a;border:1px solid #ccebd6}
+.status.error{background:#fff0f0;color:#8b3030;border:1px solid #f0cccc}
+.badge{display:inline-flex;padding:7px 10px;border-radius:999px;background:#e7f5f5;color:var(--dark);font-size:10px;font-weight:900;text-transform:uppercase;letter-spacing:1px}
+@media(max-width:820px){.layout{grid-template-columns:1fr}}
+@media(max-width:600px){header{padding:13px 5%}.brand img{max-width:165px}.item{grid-template-columns:70px 1fr}.item img{width:70px;height:70px}.price{grid-column:2}.row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+    <a href="index.html#inicio" class="brand">
+        <img src="logo.png" alt="Green Tech Perú" onerror="this.style.display='none'">
+    </a>
+    <a href="index.html#productos">← Seguir comprando</a>
+</header>
+
+<main class="wrap">
+    <div class="kicker">Compra segura</div>
+    <h1>Finaliza tu compra</h1>
+    <p class="muted">Revisa tu pedido, completa tus datos y continúa al checkout seguro para pagar con tarjeta.</p>
+
+    <div class="layout">
+        <section class="panel">
+            <span class="badge">Tu pedido</span>
+            <div id="items"></div>
+        </section>
+
+        <aside class="panel">
+            <h2>Resumen del pedido</h2>
+            <div class="total"><span>Productos</span><strong id="subtotal">S/ 0.00</strong></div>
+            <div class="total"><span>Envío</span><span>A coordinar</span></div>
+            <div class="total final"><span>Total</span><strong id="total">S/ 0.00</strong></div>
+
+            <h2 style="margin-top:24px">Datos de entrega</h2>
+            <form id="orderForm">
+                <div class="row">
+                    <div><label for="name">Nombre completo *</label><input id="name" required autocomplete="name"></div>
+                    <div><label for="phone">Celular *</label><input id="phone" required inputmode="tel" autocomplete="tel"></div>
+                </div>
+                <label for="email">Correo electrónico *</label>
+                <input id="email" type="email" required autocomplete="email">
+
+                <label for="address">Dirección / ciudad de entrega *</label>
+                <textarea id="address" rows="3" required autocomplete="street-address"></textarea>
+
+                <div class="card-payment">
+                    <strong>💳 Pago con tarjeta</strong>
+                    <span class="muted">Solo tarjeta de crédito o débito. Al presionar «Comprar», se abrirá el checkout seguro de Culqi para ingresar los datos de la tarjeta.</span>
+                    <div class="secure">🔒 Los datos de la tarjeta son capturados por el checkout de Culqi y no se guardan en esta página.</div>
+                </div>
+
+                <button class="primary" id="send" type="submit">Comprar con tarjeta</button>
+                <div id="status" class="status" role="status"></div>
+            </form>
+        </aside>
+    </div>
+</main>
+
+<script src="https://js.culqi.com/checkout-js"></script>
+<script>
+const KEY = "greenTechnicalCarrito";
+const API_URL = "api/crear-cargo.php";
+
+/* Pega aquí la LLAVE PÚBLICA de Culqi. Nunca pongas la llave secreta en este archivo. */
+const CULQI_PUBLIC_KEY = "pk_test_REEMPLAZAR_CON_TU_LLAVE_PUBLICA";
+
+const CATALOGO = [
+  {
+    "id": 1,
+    "price": 4200.0,
+    "name": "DREAM 2",
+    "description": "El DREAM 2 es un controlador profesional de riego habilitado para el uso desde el Internet, multilínea y de gran escala.",
+    "image": "DREAM 2.jpg"
+  },
+  {
+    "id": 2,
+    "price": 3100.0,
+    "name": "SAPIR 2",
+    "description": "El SAPIR 2 es un controlador profesional de riego habilitado para el uso desde el Internet, para escala mediana y grande.",
+    "image": "SAPIR 2.jpg"
+  },
+  {
+    "id": 3,
+    "price": 2100.0,
+    "name": "OASIS",
+    "description": "El OASIS es un controlador profesional de riego habilitado para el uso desde el Internet, de escala pequeña a mediana.",
+    "image": "EL OASIS.jpg"
+  },
+  {
+    "id": 4,
+    "price": 1850.0,
+    "name": "AGROTAL",
+    "description": "El AGROTAL es un controlador de riego basado en tiempo, de escala mediana y habilitado para uso desde el internet.",
+    "image": "AGROTAL.jpg"
+  },
+  {
+    "id": 5,
+    "price": 950.0,
+    "name": "MINI-AGG",
+    "description": "El MINI-AGG es un controlador de riego económico, basado en tiempo para el sector agrícola.",
+    "image": "MINI-AGG -m.jpg"
+  },
+  {
+    "id": 6,
+    "price": 620.0,
+    "name": "GARDEN WIZ",
+    "description": "El GARDEN WIZ es un controlador de riego, inteligente e innovador para paisaje, habilitado a uso a través de Bluetooth",
+    "image": "GARDEN WIZ.jpg"
+  },
+  {
+    "id": 7,
+    "price": 1450.0,
+    "name": "FILTRON 20-30",
+    "description": "El FILTRON 20-30 es un controlador de retro lavado modular y profesional, puede operar hasta 30 filtros.",
+    "image": "FILTRON 20-30.jpg"
+  },
+  {
+    "id": 8,
+    "price": 780.0,
+    "name": "FILTRON 1-10",
+    "description": "El FILTRON 1-10 es un controlador de retro lavado modular y profesional, puede operar hasta 10 filtros. Los diferentes módulos son: 2/4/6/8/10",
+    "image": "FILTRON 1-10.jpg"
+  },
+  {
+    "id": 9,
+    "price": 420.0,
+    "name": "FT1 & BT",
+    "description": "El FT1 & BT es un controlador de retrolavado profesional y económico para un solo filtro.",
+    "image": "FT1 & BT.jpg"
+  },
+  {
+    "id": 10,
+    "price": 460.0,
+    "name": "FT1 & LCD",
+    "description": "El FT1 & LCD es un controlador de retro lavado profesional y económico para un solo filtro.",
+    "image": "FT1 & LCD.jpg"
+  },
+  {
+    "id": 11,
+    "price": 890.0,
+    "name": "DP INDUSTRIAL",
+    "description": "El PD INDUSTRIAL es una solución confiable y precisa para retro lavar filtros por sensor de presión diferencial, su uso principal es para controladores de riego que no tienen entradas analógicas.",
+    "image": "DP INDUSTRIAL.jpg"
+  },
+  {
+    "id": 12,
+    "price": 1250.0,
+    "name": "RTU RF G5 MODULAR",
+    "description": "El sistema de RTU RADIO G5 es un sistema de RTU’s inalámbricos que permite a los controladores compatibles controlar y monitorear dispositivos ubicados lejos del controlador, sin tener ningún cable en el campo.",
+    "image": "RTU RF G5 MODULAR.jpg"
+  },
+  {
+    "id": 13,
+    "price": 980.0,
+    "name": "RTU RF G3/G4/G4.5",
+    "description": "Los sistemas de RTU’s por RADIO G3, G4, G4.5 son sistemas inalámbricas, que permiten a los controladores controlar y monitorear dispositivos.",
+    "image": "RTU RF G5 MODULAR.jpg"
+  },
+  {
+    "id": 14,
+    "price": 720.0,
+    "name": "RTU 2W",
+    "description": "El sistema de 2W RTU se basa en un solo cable, que permite que los controladores compatibles controlen y monitoreen los dispositivos ubicados lejos del controlador.",
+    "image": "RTU RF G5 MODULAR.jpg"
+  },
+  {
+    "id": 15,
+    "price": 350.0,
+    "name": "UNILINER",
+    "description": "Adaptador que permite utilizar sistemas RTU Talgil 2W o RF con controladores compatibles.",
+    "image": "UNILINER.jpg"
+  },
+  {
+    "id": 17,
+    "price": 2800.0,
+    "name": "BOMBA DE AGUA 01",
+    "description": "Equipo para aplicaciones de bombeo dentro de sistemas de riego.",
+    "image": "Bomba de agua 01.jpg"
+  },
+  {
+    "id": 18,
+    "price": 3600.0,
+    "name": "MESA DE FERTILIZACIÓN 01",
+    "description": "Equipo destinado a aplicaciones de fertilización dentro de sistemas de riego tecnificado.",
+    "image": "Mesa de fertilización 01.jpg"
+  }
+];
+
+const read = () => {
+    try { return JSON.parse(localStorage.getItem(KEY)) || []; }
+    catch(e) { return []; }
+};
+const save = cart => localStorage.setItem(KEY, JSON.stringify(cart));
+const sol = n => "S/ " + Number(n).toFixed(2);
+
+function normalizarCarrito() {
+    return read().map(item => {
+        const p = CATALOGO.find(x => Number(x.id) === Number(item.id));
+        if (!p) return null;
+        return {
+            id: p.id,
+            nombre: p.name,
+            precio: p.price,
+            imagen: p.image,
+            descripcion: p.description,
+            cantidad: Math.min(99, Math.max(1, Number(item.cantidad) || 1))
+        };
+    }).filter(Boolean);
+}
+
+function render() {
+    const cart = normalizarCarrito();
+    const root = document.getElementById("items");
+    root.innerHTML = "";
+
+    if (!cart.length) {
+        root.innerHTML = '<div class="empty"><h2>Tu carrito está vacío</h2><p class="muted">Explora el catálogo y agrega los productos que necesitas.</p><a href="index.html#productos">Ver productos →</a></div>';
+        document.getElementById("subtotal").textContent = "S/ 0.00";
+        document.getElementById("total").textContent = "S/ 0.00";
+        document.getElementById("send").disabled = true;
+        return;
+    }
+
+    let subtotal = 0;
+    cart.forEach((it, i) => {
+        subtotal += it.precio * it.cantidad;
+
+        const el = document.createElement("article");
+        el.className = "item";
+
+        const img = document.createElement("img");
+        img.src = it.imagen || "";
+        img.alt = it.nombre;
+
+        const info = document.createElement("div");
+        const name = document.createElement("h3");
+        name.textContent = it.nombre;
+
+        const desc = document.createElement("p");
+        desc.className = "muted";
+        desc.textContent = it.descripcion;
+
+        const qtyBox = document.createElement("div");
+        qtyBox.className = "qty";
+
+        const minus = document.createElement("button");
+        minus.type = "button";
+        minus.textContent = "−";
+
+        const input = document.createElement("input");
+        input.type = "number";
+        input.min = "1";
+        input.max = "99";
+        input.value = it.cantidad;
+
+        const plus = document.createElement("button");
+        plus.type = "button";
+        plus.textContent = "+";
+
+        const remove = document.createElement("button");
+        remove.type = "button";
+        remove.className = "remove";
+        remove.textContent = "Eliminar";
+
+        const update = value => {
+            const c = normalizarCarrito();
+            if (value <= 0) c.splice(i, 1);
+            else c[i].cantidad = Math.min(99, Math.max(1, parseInt(value, 10) || 1));
+            save(c);
+            render();
+        };
+
+        minus.onclick = () => update(it.cantidad - 1);
+        plus.onclick = () => update(it.cantidad + 1);
+        input.onchange = () => update(input.value);
+        remove.onclick = () => update(0);
+
+        qtyBox.append(minus, input, plus, remove);
+        info.append(name, desc, qtyBox);
+
+        const p = document.createElement("div");
+        p.className = "price";
+        p.textContent = sol(it.precio * it.cantidad);
+
+        el.append(img, info, p);
+        root.appendChild(el);
+    });
+
+    document.getElementById("subtotal").textContent = sol(subtotal);
+    document.getElementById("total").textContent = sol(subtotal);
+}
+
+function showStatus(message, type="error") {
+    const box = document.getElementById("status");
+    box.textContent = message;
+    box.className = `status show ${type}`;
+}
+
+function getClientName(fullName) {
+    const parts = fullName.trim().split(/\s+/);
+    const firstName = parts.shift() || "";
+    return { firstName, lastName: parts.join(" ") || firstName };
+}
+
+function openCulqiCheckout(total, client) {
+    if (!window.CulqiCheckout) {
+        showStatus("No se pudo cargar el checkout seguro de Culqi. Revisa tu conexión.", "error");
+        return;
+    }
+
+    if (!CULQI_PUBLIC_KEY || CULQI_PUBLIC_KEY.includes("REEMPLAZAR")) {
+        showStatus("Falta configurar la llave pública de Culqi en checkout.html. El código ya está preparado; solo debes colocar tu pk_test_... o pk_live_...", "error");
+        return;
+    }
+
+    const settings = {
+        title: "Green Tech Perú",
+        currency: "PEN",
+        amount: Math.round(total * 100)
+    };
+
+    const options = {
+        lang: "es",
+        installments: true,
+        modal: true,
+        paymentMethods: {
+            tarjeta: true,
+            yape: false,
+            billetera: false,
+            bancaMovil: false,
+            agente: false,
+            cuotealo: false
+        },
+        paymentMethodsSort: ["tarjeta"]
+    };
+
+    const config = { settings, client, options };
+    const Culqi = new CulqiCheckout(CULQI_PUBLIC_KEY, config);
+
+    Culqi.culqi = async function() {
+        if (!Culqi.token) {
+            showStatus(Culqi.error?.user_message || "No se pudo tokenizar la tarjeta.", "error");
+            return;
+        }
+
+        const cart = normalizarCarrito();
+        const payload = {
+            token_id: Culqi.token.id,
+            customer: {
+                name: document.getElementById("name").value.trim(),
+                phone: document.getElementById("phone").value.trim(),
+                email: document.getElementById("email").value.trim(),
+                address: document.getElementById("address").value.trim()
+            },
+            items: cart.map(x => ({
+                id: x.id,
+                cantidad: x.cantidad
+            }))
+        };
+
+        showStatus("Procesando el pago de forma segura…", "ok");
+
+        try {
+            const response = await fetch(API_URL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (!response.ok || !data.ok) {
+                throw new Error(data.message || "El pago no pudo ser procesado.");
+            }
+
+            localStorage.removeItem(KEY);
+            render();
+            showStatus(`Pago aprobado. Código de operación: ${data.charge_id}`, "ok");
+        } catch (error) {
+            showStatus(error.message || "No se pudo completar el pago.", "error");
+        }
+    };
+
+    Culqi.open();
+}
+
+document.getElementById("orderForm").addEventListener("submit", event => {
+    event.preventDefault();
+
+    const cart = normalizarCarrito();
+    if (!cart.length) return;
+
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const address = document.getElementById("address").value.trim();
+
+    if (!name || !email || !phone || !address) {
+        showStatus("Completa todos los datos obligatorios antes de pagar.", "error");
+        return;
+    }
+
+    const total = cart.reduce((sum, item) => sum + item.precio * item.cantidad, 0);
+    const client = getClientName(name);
+
+    openCulqiCheckout(total, {
+        email,
+        firstName: client.firstName,
+        lastName: client.lastName
+    });
+});
+
+render();
+</script>
+</body>
+</html>
